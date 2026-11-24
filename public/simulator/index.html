@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Dual-Number Simulator - US Market (USD $)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .wa-chat-bg {
+      background-color: #0b141a;
+      background-image: radial-gradient(#1e293b 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- Header -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white">
+        <i class="fa-brands fa-whatsapp text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-white flex items-center gap-2">
+          Dual-WhatsApp Phone Simulator 
+          <span class="text-xs font-normal px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">US Edition (USD $)</span>
+        </h1>
+        <p class="text-xs text-slate-400">Left: Customer Phone (WhatsApp A) | Right: Kitchen Dispatch (WhatsApp B)</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="/" target="_blank" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-md">
+        <i class="fa-solid fa-fire-burner"></i> Open Live KDS Dashboard
+      </a>
+    </div>
+  </header>
+
+  <!-- Simulator Main Section -->
+  <main class="flex-1 p-6 flex justify-center items-center">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl w-full">
+
+      <!-- ================= PHONE A: CUSTOMER SIDE ================= -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[650px]">
+        <!-- Phone Top Bar -->
+        <div class="bg-[#202c33] px-4 py-3 flex items-center justify-between border-b border-[#2a3942]">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold">
+              <i class="fa-solid fa-burger"></i>
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-white flex items-center gap-1.5">
+                <span>Bistro Gourmet Concierge</span>
+                <i class="fa-solid fa-circle-check text-emerald-400 text-xs" title="Verified Business"></i>
+              </div>
+              <div class="text-[11px] text-emerald-400 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>online (Number A: Official)</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 text-slate-400 text-sm">
+            <i class="fa-solid fa-video cursor-pointer hover:text-white"></i>
+            <i class="fa-solid fa-phone cursor-pointer hover:text-white"></i>
+          </div>
+        </div>
+
+        <!-- Chat Messages Area -->
+        <div id="chat-messages-a" class="flex-1 p-4 overflow-y-auto wa-chat-bg space-y-3 custom-scroll text-xs">
+          <div class="flex justify-start">
+            <div class="bg-[#202c33] text-slate-200 p-3 rounded-2xl rounded-tl-none max-w-[85%] shadow space-y-1.5 border border-slate-800">
+              <p>Hello! Welcome to <strong>Bistro Gourmet - American Craft Kitchen</strong> 🍔🍕</p>
+              <p>I am your autonomous AI ordering concierge. You can browse our menu, place an order with delivery details, or check live tracking on an existing order!</p>
+              <span class="text-[10px] text-slate-400 block text-right">11:30 AM</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Suggested Quick Chips -->
+        <div class="bg-[#111b21] px-3 py-2 border-t border-[#202c33] flex gap-2 overflow-x-auto text-xs whitespace-nowrap custom-scroll">
+          <button class="quick-chip bg-slate-800 hover:bg-slate-700 text-emerald-400 px-3 py-1 rounded-full border border-slate-700 transition" data-text="Show me the full menu please">
+            📋 Show Menu ($)
+          </button>
+          <button class="quick-chip bg-slate-800 hover:bg-slate-700 text-amber-400 px-3 py-1 rounded-full border border-slate-700 transition" data-text="I'd like to order 2 Bacon Cheeseburgers and 1 Truffle Fries">
+            🍔 2 Bacon Burgers + Truffle Fries
+          </button>
+          <button class="quick-chip bg-slate-800 hover:bg-slate-700 text-blue-400 px-3 py-1 rounded-full border border-slate-700 transition" data-text="Where is my order? Track status">
+            🛵 Track Status
+          </button>
+        </div>
+
+        <!-- Phone Input Bar -->
+        <form id="form-customer-a" class="bg-[#202c33] p-3 flex items-center gap-2 border-t border-[#2a3942]">
+          <input type="text" id="input-customer-a" placeholder="Type message in English..." class="flex-1 bg-[#2a3942] text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder-slate-400">
+          <button type="submit" class="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center transition">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </form>
+      </div>
+
+      <!-- ================= PHONE B: KITCHEN STAFF SIDE ================= -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[650px]">
+        <!-- Phone Top Bar -->
+        <div class="bg-[#202c33] px-4 py-3 flex items-center justify-between border-b border-[#2a3942]">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold">
+              <i class="fa-solid fa-kitchen-set"></i>
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-white flex items-center gap-1.5">
+                <span>Kitchen Dispatch Terminal</span>
+              </div>
+              <div class="text-[11px] text-amber-400 flex items-center gap-1">
+                <span>Number B (Kitchen Only)</span>
+              </div>
+            </div>
+          </div>
+          <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">Staff Mode</span>
+        </div>
+
+        <!-- Chat Messages Area -->
+        <div id="chat-messages-b" class="flex-1 p-4 overflow-y-auto wa-chat-bg space-y-3 custom-scroll text-xs">
+          <div class="flex justify-center">
+            <span class="bg-[#182229] text-slate-400 text-[11px] px-3 py-1 rounded-full border border-slate-800">
+              Kitchen Bot listens for new customer orders & status update commands
+            </span>
+          </div>
+        </div>
+
+        <!-- Quick Kitchen Commands -->
+        <div class="bg-[#111b21] px-3 py-2 border-t border-[#202c33] flex gap-2 overflow-x-auto text-xs whitespace-nowrap custom-scroll">
+          <button class="kitchen-cmd-chip bg-slate-800 hover:bg-slate-700 text-amber-400 px-3 py-1 rounded-full border border-slate-700 transition" data-action="PREPARING">
+            👨‍🍳 Mark Preparing
+          </button>
+          <button class="kitchen-cmd-chip bg-slate-800 hover:bg-slate-700 text-purple-400 px-3 py-1 rounded-full border border-slate-700 transition" data-action="OUT">
+            🛵 Dispatch Driver
+          </button>
+          <button class="kitchen-cmd-chip bg-slate-800 hover:bg-slate-700 text-emerald-400 px-3 py-1 rounded-full border border-slate-700 transition" data-action="DELIVERED">
+            ✅ Mark Delivered
+          </button>
+        </div>
+
+        <!-- Kitchen Input Bar -->
+        <form id="form-kitchen-b" class="bg-[#202c33] p-3 flex items-center gap-2 border-t border-[#2a3942]">
+          <input type="text" id="input-kitchen-b" placeholder="Command: STATUS ORD-XXXX PREPARING" class="flex-1 bg-[#2a3942] text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-500 placeholder-slate-400">
+          <button type="submit" class="w-9 h-9 rounded-xl bg-amber-600 hover:bg-amber-500 text-white flex items-center justify-center transition">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    const chatA = document.getElementById('chat-messages-a');
+    const chatB = document.getElementById('chat-messages-b');
+    const formA = document.getElementById('form-customer-a');
+    const inputA = document.getElementById('input-customer-a');
+    const formB = document.getElementById('form-kitchen-b');
+    const inputB = document.getElementById('input-kitchen-b');
+
+    let currentOrder = null;
+    let orderStep = 'idle';
+
+    function appendMsg(chatElem, text, isSender, timestamp = 'Just now') {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `flex ${isSender ? 'justify-end' : 'justify-start'}`;
+      
+      const bubbleClass = isSender 
+        ? 'bg-[#005c4b] text-white rounded-tr-none' 
+        : 'bg-[#202c33] text-slate-200 rounded-tl-none border border-slate-800';
+
+      msgDiv.innerHTML = `
+        <div class="${bubbleClass} p-3 rounded-2xl max-w-[85%] shadow space-y-1">
+          <div class="whitespace-pre-wrap">${text}</div>
+          <span class="text-[10px] text-slate-300/80 block text-right">${timestamp}</span>
+        </div>
+      `;
+      chatElem.appendChild(msgDiv);
+      chatElem.scrollTop = chatElem.scrollHeight;
+    }
+
+    formA.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const txt = inputA.value.trim();
+      if (!txt) return;
+      inputA.value = '';
+      appendMsg(chatA, txt, true);
+      handleCustomerMessage(txt);
+    });
+
+    formB.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const txt = inputB.value.trim();
+      if (!txt) return;
+      inputB.value = '';
+      appendMsg(chatB, txt, true);
+      handleKitchenMessage(txt);
+    });
+
+    document.querySelectorAll('.quick-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const text = btn.getAttribute('data-text');
+        appendMsg(chatA, text, true);
+        handleCustomerMessage(text);
+      });
+    });
+
+    document.querySelectorAll('.kitchen-cmd-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.getAttribute('data-action');
+        const orderId = currentOrder ? currentOrder.id : 'ORD-2041';
+        const cmd = `STATUS ${orderId} ${action}`;
+        appendMsg(chatB, cmd, true);
+        handleKitchenMessage(cmd);
+      });
+    });
+
+    function handleCustomerMessage(userText) {
+      const lower = userText.toLowerCase();
+
+      setTimeout(() => {
+        // 1. Menu Request
+        if (lower.includes('menu') || lower.includes('food') || lower.includes('list')) {
+          appendMsg(chatA, 
+            `📋 *BISTRO GOURMET OFFICIAL MENU (USD)*:\n\n` +
+            `🍔 *Artisan Burgers*:\n` +
+            `• The Classic Bacon Cheeseburger - $13.99\n` +
+            `• Smoky Texas BBQ Brisket Burger - $16.50\n` +
+            `• Crispy Nashville Hot Chicken - $14.25\n` +
+            `• Truffle Mushroom Swiss Burger - $15.75\n\n` +
+            `🍕 *Woodfired Pizzas (14" Large)*:\n` +
+            `• Brooklyn Pepperoni Feast - $21.99\n` +
+            `• Smoked BBQ Chicken Pizza - $19.50\n` +
+            `• Four-Cheese Margherita - $18.25\n\n` +
+            `🍟 *Appetizers & Sides*:\n` +
+            `• Loaded Truffle Parmesan Fries - $7.50\n` +
+            `• Buffalo Wings (8 Pcs) - $11.99\n` +
+            `• Mozzarella Sticks (6 Pcs) - $8.25\n\n` +
+            `🥤 *Shakes & Drinks*:\n` +
+            `• Hand-Spun Salted Caramel Shake - $6.50\n` +
+            `• Fresh Strawberry Lemonade - $4.75\n` +
+            `• Classic Coca-Cola Can (12 oz) - $2.50\n\n` +
+            `🛵 *Delivery Fee*: $3.99 flat across city\n\n` +
+            `What can I get started for you today?`
+          , false);
+          return;
+        }
+
+        // 2. Status Request
+        if (lower.includes('status') || lower.includes('where') || lower.includes('track') || lower.includes('kahan')) {
+          if (!currentOrder) {
+            appendMsg(chatA, `Order *ORD-2041* for Michael Johnson is currently:\n\n👨‍🍳 *Status*: In Kitchen (Chef is cooking fresh)\n⏱️ *ETA*: ~15-20 minutes remaining\n📍 *Destination*: 742 Evergreen Terrace, Springfield`, false);
+          } else {
+            appendMsg(chatA, `Your order *${currentOrder.id}* live status:\n\n📌 *Status*: ${currentOrder.status.toUpperCase()}\n📍 *Address*: ${currentOrder.address}\n💵 *Total*: $${currentOrder.total}`, false);
+          }
+          return;
+        }
+
+        // 3. Address step
+        if (orderStep === 'asking_address') {
+          currentOrder.address = userText;
+          orderStep = 'awaiting_confirm';
+
+          appendMsg(chatA, 
+            `Thank you! Here is your order recap:\n\n` +
+            `📦 *Items*: ${currentOrder.itemsText}\n` +
+            `📍 *Delivery Address*: ${currentOrder.address}\n` +
+            `💰 *Subtotal*: $${currentOrder.subtotal.toFixed(2)}\n` +
+            `🛵 *Delivery Fee*: $3.99\n` +
+            `💵 *Total Amount*: *$${currentOrder.total.toFixed(2)}*\n\n` +
+            `Would you like me to confirm and dispatch this order to the kitchen? (Reply with *Yes* or *Confirm*)`
+          , false);
+          return;
+        }
+
+        // 4. Confirmation step
+        if (orderStep === 'awaiting_confirm') {
+          if (lower.includes('yes') || lower.includes('confirm') || lower.includes('yep') || lower.includes('haan') || lower.includes('sure')) {
+            orderStep = 'placed';
+            const orderId = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
+            currentOrder.id = orderId;
+            currentOrder.status = 'received';
+
+            appendMsg(chatA, 
+              `🎉 *Order Confirmed & Sent to Kitchen!*\n\n` +
+              `🆔 *Order ID*: *${orderId}*\n` +
+              `⏱️ *Estimated Delivery Time*: 30-35 mins\n` +
+              `💵 *Payment*: Pay driver upon arrival ($${currentOrder.total.toFixed(2)})\n\n` +
+              `Feel free to check status anytime by asking *"Where is my order?"*`
+            , false);
+
+            triggerKitchenAlert(currentOrder);
+            return;
+          }
+        }
+
+        // 5. Ordering intent detection
+        if (lower.includes('bacon') || lower.includes('burger') || lower.includes('fries') || lower.includes('pizza') || lower.includes('order')) {
+          currentOrder = {
+            itemsText: "2x The Classic Bacon Cheeseburger ($27.98) + 1x Loaded Truffle Fries ($7.50)",
+            subtotal: 35.48,
+            total: 39.47,
+            status: 'received'
+          };
+          orderStep = 'asking_address';
+
+          appendMsg(chatA, 
+            `Awesome choice! 🍔🍟\n` +
+            `Selected Items:\n• 2x The Classic Bacon Cheeseburger\n• 1x Loaded Truffle Parmesan Fries\n\n` +
+            `Please provide your full *Delivery Address* (Street, Apt/Suite, City, ZIP code).`
+          , false);
+          return;
+        }
+
+        appendMsg(chatA, `Thanks for reaching out! You can click *Show Menu ($)* to view delicious items or tell me what you'd like to eat!`, false);
+      }, 700);
+    }
+
+    function triggerKitchenAlert(order) {
+      setTimeout(() => {
+        appendMsg(chatB, 
+          `🚨 *NEW ORDER RECEIVED FROM WHATSAPP A*\n\n` +
+          `📦 *Order ID*: *${order.id}*\n` +
+          `👤 *Customer*: Brandon Clark (+1 555-345-6789)\n` +
+          `📍 *Address*: ${order.address}\n` +
+          `🍽️ *Items*:\n${order.itemsText}\n` +
+          `💰 *Total*: $${order.total.toFixed(2)}\n` +
+          `--------------------------\n` +
+          `Reply to update status:\n` +
+          `*STATUS ${order.id} PREPARING*\n` +
+          `*STATUS ${order.id} OUT*\n` +
+          `*STATUS ${order.id} DELIVERED*`
+        , false);
+      }, 1200);
+    }
+
+    function handleKitchenMessage(cmdText) {
+      setTimeout(() => {
+        const match = cmdText.match(/(?:STATUS\s+)?(ORD-\d{4})\s+(PREPARING|OUT|DELIVERED|CANCEL)/i);
+        if (!match) {
+          appendMsg(chatB, `⚠️ Command syntax: *STATUS ORD-XXXX PREPARING*`, false);
+          return;
+        }
+
+        const orderId = match[1].toUpperCase();
+        const action = match[2].toUpperCase();
+
+        appendMsg(chatB, `✅ Database updated: *${orderId}* status changed to [${action}]. Customer notified on Number A.`, false);
+
+        setTimeout(() => {
+          if (action === 'PREPARING') {
+            appendMsg(chatA, `🍳 *Kitchen Update*: Chef has started cooking order *${orderId}* fresh! Sizzling hot on the grill.`, false);
+          } else if (action === 'OUT') {
+            appendMsg(chatA, `🛵 *Driver Dispatched*: Order *${orderId}* is on its way to your address! Please keep your phone handy.`, false);
+          } else if (action === 'DELIVERED') {
+            appendMsg(chatA, `🎉 *Delivered*: Order *${orderId}* has been delivered. Enjoy your meal! Thank you for dining with Bistro Gourmet! ⭐⭐⭐⭐⭐`, false);
+          }
+        }, 800);
+
+      }, 600);
+    }
+  </script>
+</body>
+</html>
