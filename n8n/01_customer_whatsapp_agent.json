@@ -1,0 +1,386 @@
+{
+  "name": "01_WhatsApp_Customer_Agent_A",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-customer-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook-inbound",
+      "name": "Webhook: Inbound WhatsApp A",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 300],
+      "webhookId": "whatsapp-customer-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Universal WhatsApp Payload Parser (Meta Cloud API, Evolution API, and Local Simulator)\nconst body = $input.item.json.body || $input.item.json;\nconst query = $input.item.json.query || {};\n\n// 1. Meta Webhook Verification Challenge (GET / POST)\nif (query['hub.mode'] === 'subscribe' && query['hub.challenge']) {\n  return [{\n    json: {\n      is_challenge: true,\n      challenge_response: query['hub.challenge']\n    }\n  }];\n}\n\nlet customerPhone = '';\nlet customerName = 'Guest Customer';\nlet messageText = '';\nlet messageId = '';\nlet provider = 'unknown';\n\n// 2. Meta WhatsApp Cloud API Structure\nif (body.entry && body.entry[0]?.changes && body.entry[0].changes[0]?.value?.messages) {\n  const value = body.entry[0].changes[0].value;\n  const msg = value.messages[0];\n  const contact = value.contacts ? value.contacts[0] : null;\n  \n  if (msg && msg.type === 'text') {\n    customerPhone = msg.from;\n    customerName = contact?.profile?.name || 'Customer';\n    messageText = msg.text.body.trim();\n    messageId = msg.id;\n    provider = 'meta_cloud';\n  }\n}\n// 3. Evolution API / Baileys Structure\nelse if (body.data && body.data.key) {\n  customerPhone = (body.data.key.remoteJid || '').replace('@s.whatsapp.net', '');\n  customerName = body.data.pushName || 'Customer';\n  messageText = body.data.message?.conversation || body.data.message?.extendedTextMessage?.text || '';\n  messageId = body.data.key.id;\n  provider = 'evolution_api';\n}\n// 4. Generic / Direct Simulation Payload\nelse if (body.phone && (body.message || body.text)) {\n  customerPhone = String(body.phone).replace(/[^0-9]/g, '');\n  customerName = body.name || 'Brandon Clark';\n  messageText = (body.message || body.text).trim();\n  messageId = 'sim-' + Date.now();\n  provider = 'simulator';\n}\n\n// Skip empty or delivery receipts\nif (!messageText || !customerPhone) {\n  return [{\n    json: {\n      is_valid_message: false,\n      reason: 'Empty text or delivery receipt event'\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    is_valid_message: true,\n    customer_phone: customerPhone,\n    customer_name: customerName,\n    message_text: messageText,\n    message_id: messageId,\n    provider: provider,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "node-payload-parser",
+      "name": "Parse & Normalize Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.is_challenge }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "node-check-challenge",
+      "name": "Is Webhook Challenge?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [520, 160]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.challenge_response }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "node-return-challenge",
+      "name": "Return Meta Challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [740, 160]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.is_valid_message }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "node-filter-valid",
+      "name": "Is Valid Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [520, 360]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"status\": \"ignored\", \"reason\": \"Receipt or non-message event\"}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "node-ignore-receipt",
+      "name": "Acknowledge Non-Message",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [520, 560]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message_text }}",
+        "options": {
+          "systemMessage": "=You are \"BistroBot\", the autonomous conversational AI food ordering concierge for [Bistro Gourmet - American Craft Kitchen] on WhatsApp.\nCustomer Name: {{ $json.customer_name }}\nCustomer Phone: {{ $json.customer_phone }}\nCurrency: USD ($)\nDelivery Fee: $3.99\n\nLANGUAGE & STYLE:\n- Reply naturally in English (or Roman Urdu/Hindi if the customer addresses you in it).\n- Keep WhatsApp messages short, friendly, and formatted with clean emojis.\n\nAVAILABLE TOOLS:\n1. `get_restaurant_menu`: Call when customer asks for the menu, deals, burgers, pizzas, sides, or prices in USD ($).\n2. `create_restaurant_order`: Call ONLY AFTER the customer explicitly confirms their items, address, and total bill in USD ($). Pass a JSON string with customer_name, customer_phone, delivery_address, items array, total_amount, special_notes.\n3. `check_order_status`: Call when customer asks for order status, tracking, or ETA. Pass order ID (e.g. ORD-XXXX) or phone.\n4. `cancel_order`: Call if customer explicitly asks to cancel an order before cooking.\n\nORDERING RULES:\n- Always ask for the complete delivery address (Street, Apt/Suite, City, State, ZIP code).\n- Always present an itemized summary before confirming:\n  • Items and quantities with $ prices\n  • Delivery fee: $3.99\n  • Total Bill: $XX.XX\n- Ask: \"Would you like me to confirm and place this order with the kitchen?\"\n- Once confirmed, call `create_restaurant_order` and reply with the generated Order ID and estimated delivery time (30-40 mins)."
+        }
+      },
+      "id": "node-langchain-agent",
+      "name": "BistroBot AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [800, 360]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "node-llm-model",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [660, 620]
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "node-memory-buffer",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [820, 620]
+    },
+    {
+      "parameters": {
+        "name": "get_restaurant_menu",
+        "description": "Call this tool to get the restaurant menu, American food items, categories, descriptions, and prices in USD ($). Input can be empty string or category name like 'Burgers' or 'Pizzas'.",
+        "jsCode": "// American Restaurant Menu Provider Tool (USD Pricing)\nconst menu = {\n  \"Artisan Burgers\": [\n    { name: \"The Classic Bacon Cheeseburger\", price: \"$13.99\", desc: \"Angus beef, applewood bacon, aged cheddar, house relish on brioche\" },\n    { name: \"Smoky Texas BBQ Brisket Burger\", price: \"$16.50\", desc: \"Double smash patties, smoked brisket, crispy onion rings, BBQ sauce\" },\n    { name: \"Crispy Nashville Hot Chicken\", price: \"$14.25\", desc: \"Buttermilk fried chicken, hot honey glaze, dill pickles, coleslaw\" },\n    { name: \"Truffle Mushroom Swiss\", price: \"$15.75\", desc: \"Prime beef, sautéed cremini mushrooms, Swiss, black truffle aioli\" }\n  ],\n  \"Woodfired Pizzas (14\\\" Large)\": [\n    { name: \"Brooklyn Pepperoni Feast\", price: \"$21.99\", desc: \"Sourdough crust, San Marzano sauce, cupping pepperoni, hot honey drizzle\" },\n    { name: \"Smoked BBQ Chicken Pizza\", price: \"$19.50\", desc: \"Grilled chicken, red onions, smoked gouda, cilantro, hickory BBQ base\" },\n    { name: \"Four-Cheese Margherita\", price: \"$18.25\", desc: \"Fresh mozzarella, fontina, gorgonzola, parmesan, fresh basil\" }\n  ],\n  \"Appetizers & Sides\": [\n    { name: \"Loaded Truffle Parmesan Fries\", price: \"$7.50\", desc: \"Hand-cut fries, white truffle oil, shaved parmesan, garlic aioli\" },\n    { name: \"Buffalo Wings (8 Pcs)\", price: \"$11.99\", desc: \"Crispy jumbo wings, classic buffalo butter glaze, blue cheese dip\" },\n    { name: \"Mozzarella Sticks (6 Pcs)\", price: \"$8.25\", desc: \"Beer-battered golden sticks with warm marinara dipping sauce\" }\n  ],\n  \"Beverages & Desserts\": [\n    { name: \"Hand-Spun Salted Caramel Shake\", price: \"$6.50\", desc: \"Vanilla bean ice cream, caramel fudge, pretzel crumbles\" },\n    { name: \"Fresh Strawberry Lemonade\", price: \"$4.75\", desc: \"Muddled strawberries, California lemons, cane sugar\" },\n    { name: \"Iced Cold Brew Coffee\", price: \"$4.25\", desc: \"Slow-steeped organic cold brew over craft ice\" },\n    { name: \"Classic Coca-Cola Can (12 oz)\", price: \"$2.50\", desc: \"Chilled can of soda\" },\n    { name: \"Warm Cast-Iron Chocolate Chip Cookie\", price: \"$8.50\", desc: \"Skillet cookie with Madagascar vanilla gelato\" }\n  ]\n};\n\nlet output = \"📋 *BISTRO GOURMET OFFICIAL MENU (USD)*\\n\\n\";\nfor (const [cat, items] of Object.entries(menu)) {\n  output += `🍔 *${cat.toUpperCase()}*\\n`;\n  for (const item of items) {\n    output += `• *${item.name}* - ${item.price}\\n  _${item.desc}_\\n`;\n  }\n  output += \"\\n\";\n}\noutput += \"🛵 *Delivery Fee*: $3.99 flat\\n⏱️ *Average Delivery Time*: 30-40 minutes\";\nreturn output;"
+      },
+      "id": "node-tool-menu",
+      "name": "Tool: get_restaurant_menu",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [980, 620]
+    },
+    {
+      "parameters": {
+        "name": "create_restaurant_order",
+        "description": "Call this tool ONLY when customer has confirmed their order, items, total bill in USD ($), and delivery address. Input can be a JSON string with customer_name, customer_phone, delivery_address, items, total_amount, special_notes.",
+        "jsCode": "// Create Restaurant Order & Dispatch Alert to Kitchen Number B (USD Edition)\nlet orderData = {};\ntry {\n  orderData = typeof query === 'string' ? JSON.parse(query) : query;\n} catch (e) {\n  orderData = { raw_query: String(query) };\n}\n\nconst orderId = 'ORD-' + Math.floor(1000 + Math.random() * 9000);\nconst customerName = orderData.customer_name || 'Michael Johnson';\nconst customerPhone = orderData.customer_phone || '+1 (555) 234-5678';\nconst address = orderData.delivery_address || '742 Evergreen Terrace, Springfield, OR 97477';\nconst total = orderData.total_amount ? Number(orderData.total_amount).toFixed(2) : '35.48';\nconst notes = orderData.special_notes || 'None';\n\nlet itemsFormatted = '';\nif (Array.isArray(orderData.items) && orderData.items.length > 0) {\n  itemsFormatted = orderData.items.map(i => `• ${i.qty || 1}x ${i.item || i.name} ($${Number(i.total || (i.price * (i.qty || 1))).toFixed(2)})`).join('\\n');\n} else if (orderData.items) {\n  itemsFormatted = String(orderData.items);\n} else {\n  itemsFormatted = 'Confirmed food items';\n}\n\nreturn JSON.stringify({\n  success: true,\n  order_number: orderId,\n  customer_name: customerName,\n  customer_phone: customerPhone,\n  delivery_address: address,\n  items_summary: itemsFormatted,\n  total_amount_usd: '$' + total,\n  status: 'received',\n  estimated_time: '30-40 minutes',\n  kitchen_dispatched: true,\n  message: `Order ${orderId} successfully placed! It has been dispatched to Kitchen WhatsApp (Number B) & KDS Dashboard.`\n});"
+      },
+      "id": "node-tool-create-order",
+      "name": "Tool: create_restaurant_order",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [1140, 620]
+    },
+    {
+      "parameters": {
+        "name": "check_order_status",
+        "description": "Call this tool to check the live status, progress, and remaining time of an order in the US kitchen. Input should be the order number (e.g. ORD-XXXX) or customer phone.",
+        "jsCode": "// Live Order Status Tracker Tool (US Kitchen)\nconst input = String(query).trim().toUpperCase();\nconst match = input.match(/ORD-\\d{4}/);\nconst orderId = match ? match[0] : (input.length > 0 ? input : 'ORD-2041');\n\nreturn JSON.stringify({\n  success: true,\n  order_number: orderId,\n  status: 'preparing',\n  status_text: '👨‍🍳 Chef is currently preparing your fresh order in the kitchen.',\n  estimated_remaining_mins: 15,\n  delivery_status: 'Will dispatch with driver shortly',\n  message: `Your order ${orderId} is being prepared in the kitchen. Estimated delivery in ~15-20 minutes!`\n});"
+      },
+      "id": "node-tool-check-status",
+      "name": "Tool: check_order_status",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [1300, 620]
+    },
+    {
+      "parameters": {
+        "name": "cancel_order",
+        "description": "Call this tool if the customer requests to cancel their order. Input should be the order number or customer phone.",
+        "jsCode": "// Order Cancellation Tool\nconst input = String(query).trim();\nconst match = input.match(/ORD-\\d{4}/i);\nconst orderId = match ? match[0].toUpperCase() : 'your order';\n\nreturn JSON.stringify({\n  success: true,\n  order_number: orderId,\n  status: 'cancelled',\n  message: `Order ${orderId} has been successfully cancelled before kitchen prep started. No cancellation fees apply.`\n});"
+      },
+      "id": "node-tool-cancel-order",
+      "name": "Tool: cancel_order",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [1460, 620]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, agent_reply: $json.output, phone: $('Parse & Normalize Payload').item.json.customer_phone }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "node-respond-webhook",
+      "name": "Respond to Inbound Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1140, 360]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.whatsapp.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_META_WHATSAPP_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "={{ $('Parse & Normalize Payload').item.json.customer_phone }}"
+            },
+            {
+              "name": "type",
+              "value": "text"
+            },
+            {
+              "name": "text",
+              "value": "={{ JSON.stringify({ body: $json.output }) }}"
+            }
+          ]
+        },
+        "options": {
+          "continueOnFail": true
+        }
+      },
+      "id": "node-send-customer-reply",
+      "name": "Send Reply to Customer (WhatsApp A)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1380, 360]
+    }
+  ],
+  "connections": {
+    "Webhook: Inbound WhatsApp A": {
+      "main": [
+        [
+          {
+            "node": "Parse & Normalize Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Normalize Payload": {
+      "main": [
+        [
+          {
+            "node": "Is Webhook Challenge?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Webhook Challenge?": {
+      "main": [
+        [
+          {
+            "node": "Return Meta Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Valid Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid Message?": {
+      "main": [
+        [
+          {
+            "node": "BistroBot AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Acknowledge Non-Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "BistroBot AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "BistroBot AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: get_restaurant_menu": {
+      "ai_tool": [
+        [
+          {
+            "node": "BistroBot AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: create_restaurant_order": {
+      "ai_tool": [
+        [
+          {
+            "node": "BistroBot AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: check_order_status": {
+      "ai_tool": [
+        [
+          {
+            "node": "BistroBot AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: cancel_order": {
+      "ai_tool": [
+        [
+          {
+            "node": "BistroBot AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BistroBot AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Inbound Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Inbound Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send Reply to Customer (WhatsApp A)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,220 @@
+{
+  "name": "03_Kitchen_Dashboard_API_Bridge",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "restaurant-api/orders",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-get-orders-webhook",
+      "name": "GET /restaurant-api/orders",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 200],
+      "webhookId": "restaurant-api-orders"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  id, order_number, customer_name, customer_phone, delivery_address, \n  order_items, subtotal, delivery_fee, total_amount, special_notes, \n  status, estimated_prep_mins, created_at, updated_at,\n  ROUND(EXTRACT(EPOCH FROM (NOW() - created_at)) / 60) AS elapsed_mins\nFROM food_ops.orders\nORDER BY created_at DESC\nLIMIT 50;"
+      },
+      "id": "node-db-get-orders",
+      "name": "Fetch Orders from Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [340, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, count: $input.all().length, orders: $input.all().map(i => i.json) }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type, Authorization"
+              }
+            ]
+          }
+        }
+      },
+      "id": "node-respond-orders-list",
+      "name": "Return Orders JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [580, 200]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "restaurant-api/update-status",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-post-status-webhook",
+      "name": "POST /restaurant-api/update-status",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 440],
+      "webhookId": "restaurant-api-update-status"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT food_ops.update_order_status(\n  $1::TEXT, \n  $2::food_ops.order_status, \n  'kds_dashboard',\n  $3::TEXT\n) as result;"
+      },
+      "id": "node-db-update-status",
+      "name": "Update Status & Log Event",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [340, 440]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.whatsapp.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_META_WHATSAPP_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.result.customer_phone }}"
+            },
+            {
+              "name": "type",
+              "value": "text"
+            },
+            {
+              "name": "text",
+              "value": "={{ JSON.stringify({ body: '📢 *Kitchen Status Update*\\nOrder ' + $json.result.order_number + ' is now *' + $json.result.new_status.toUpperCase() + '*!' }) }}"
+            }
+          ]
+        },
+        "options": {
+          "continueOnFail": true
+        }
+      },
+      "id": "node-notify-customer-dashboard",
+      "name": "Notify Customer via WhatsApp A",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [580, 440]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, updated: $json.result }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type, Authorization"
+              }
+            ]
+          }
+        }
+      },
+      "id": "node-respond-update-status",
+      "name": "Return Status Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [820, 440]
+    }
+  ],
+  "connections": {
+    "GET /restaurant-api/orders": {
+      "main": [
+        [
+          {
+            "node": "Fetch Orders from Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Orders from Supabase": {
+      "main": [
+        [
+          {
+            "node": "Return Orders JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST /restaurant-api/update-status": {
+      "main": [
+        [
+          {
+            "node": "Update Status & Log Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status & Log Event": {
+      "main": [
+        [
+          {
+            "node": "Notify Customer via WhatsApp A",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Customer via WhatsApp A": {
+      "main": [
+        [
+          {
+            "node": "Return Status Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,197 @@
+{
+  "name": "02_Kitchen_WhatsApp_Responder_B",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-kitchen-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-kitchen-webhook",
+      "name": "Webhook: Kitchen WhatsApp B",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 300],
+      "webhookId": "whatsapp-kitchen-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Kitchen Command from WhatsApp Number B\nconst body = $input.item.json.body || $input.item.json;\nlet rawText = '';\nlet senderPhone = '';\n\nif (body.entry && body.entry[0]?.changes && body.entry[0].changes[0]?.value?.messages) {\n  const msg = body.entry[0].changes[0].value.messages[0];\n  if (msg.type === 'text') rawText = msg.text.body.trim();\n  else if (msg.type === 'interactive') rawText = msg.interactive.button_reply?.id || '';\n  senderPhone = msg.from;\n} else if (body.text || body.message) {\n  rawText = (body.text || body.message).trim();\n  senderPhone = body.phone || 'kitchen';\n}\n\n// Regex matching commands:\n// Examples: \"STATUS ORD-1042 PREPARING\", \"CONFIRM ORD-1042\", \"OUT ORD-1042\", \"DELIVERED ORD-1042\"\nconst match = rawText.match(/(?:STATUS\\s+)?(ORD-\\d{4})\\s+(PREPARING|CONFIRMED|OUT|DELIVERED|CANCEL)/i) ||\n              rawText.match(/(CONFIRM|PREPARING|OUT|DELIVERED|CANCEL)\\s+(ORD-\\d{4})/i);\n\nif (!match) {\n  return [{\n    json: {\n      is_valid_command: false,\n      rawText: rawText,\n      senderPhone: senderPhone,\n      message: \"Invalid kitchen command. Format: 'STATUS ORD-XXXX PREPARING' or 'OUT ORD-XXXX'\"\n    }\n  }];\n}\n\nlet orderNumber = '';\nlet action = '';\n\nif (match[1].startsWith('ORD-')) {\n  orderNumber = match[1].toUpperCase();\n  action = match[2].toUpperCase();\n} else {\n  action = match[1].toUpperCase();\n  orderNumber = match[2].toUpperCase();\n}\n\nlet newStatus = 'preparing';\nlet customerNotification = '';\n\nswitch(action) {\n  case 'CONFIRM':\n  case 'CONFIRMED':\n    newStatus = 'confirmed';\n    customerNotification = '✅ *Order Confirmed!* Kitchen ne aapka order accept kar liya hai.';\n    break;\n  case 'PREPARING':\n    newStatus = 'preparing';\n    customerNotification = '🍳 *Cooking Now!* Chef aapka fresh khana tayyar kar rahe hain.';\n    break;\n  case 'OUT':\n  case 'DISPATCH':\n  case 'DISPATCHED':\n    newStatus = 'out_for_delivery';\n    customerNotification = '🛵 *Out for Delivery!* Rider aapka garma-garam order le kar nikal chuka hai. Jald pohonch raha hai!';\n    break;\n  case 'DELIVERED':\n    newStatus = 'delivered';\n    customerNotification = '🎉 *Delivered!* Aapka order deliver ho chuka hai. Umeed hai khana pasand aayega!';\n    break;\n  case 'CANCEL':\n  case 'CANCELLED':\n    newStatus = 'cancelled';\n    customerNotification = '⚠️ *Order Cancelled*: Kisi majboori ke tehat kitchen se aapka order cancel kiya gaya hai.';\n    break;\n}\n\nreturn [{\n  json: {\n    is_valid_command: true,\n    order_number: orderNumber,\n    new_status: newStatus,\n    customer_notification: customerNotification,\n    kitchen_phone: senderPhone\n  }\n}];"
+      },
+      "id": "node-parse-kitchen-command",
+      "name": "Parse Kitchen Command",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [340, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.is_valid_command }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "node-check-command-valid",
+      "name": "Is Command Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [560, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT food_ops.update_order_status(\n  $1::TEXT, \n  $2::food_ops.order_status, \n  'kitchen_wa_b'\n) as result;"
+      },
+      "id": "node-update-supabase-status",
+      "name": "Execute Status Update in Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [780, 240]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.whatsapp.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_META_WHATSAPP_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.result.customer_phone }}"
+            },
+            {
+              "name": "type",
+              "value": "text"
+            },
+            {
+              "name": "text",
+              "value": "={{ JSON.stringify({ body: $('Parse Kitchen Command').item.json.customer_notification + '\\nOrder ID: ' + $('Parse Kitchen Command').item.json.order_number }) }}"
+            }
+          ]
+        },
+        "options": {
+          "continueOnFail": true
+        }
+      },
+      "id": "node-notify-customer-a",
+      "name": "Notify Customer (WhatsApp A)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1020, 240]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  success: true,\n  message: 'Status for ' + $('Parse Kitchen Command').item.json.order_number + ' updated to ' + $('Parse Kitchen Command').item.json.new_status,\n  notified_customer: true\n}) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "node-respond-kitchen-b",
+      "name": "Confirm to Kitchen (WhatsApp B)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1260, 240]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, error: $json.message }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "node-reject-bad-command",
+      "name": "Send Usage Help",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [780, 420]
+    }
+  ],
+  "connections": {
+    "Webhook: Kitchen WhatsApp B": {
+      "main": [
+        [
+          {
+            "node": "Parse Kitchen Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Kitchen Command": {
+      "main": [
+        [
+          {
+            "node": "Is Command Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Command Valid?": {
+      "main": [
+        [
+          {
+            "node": "Execute Status Update in Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Usage Help",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Status Update in Supabase": {
+      "main": [
+        [
+          {
+            "node": "Notify Customer (WhatsApp A)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Customer (WhatsApp A)": {
+      "main": [
+        [
+          {
+            "node": "Confirm to Kitchen (WhatsApp B)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

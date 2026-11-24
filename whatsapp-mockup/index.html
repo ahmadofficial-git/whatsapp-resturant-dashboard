@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp AI Restaurant Concierge - Portfolio UI Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* WhatsApp Native Typography & Colors */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* WhatsApp Wallpaper Doodle Pattern */
+    .wa-bg {
+      background-color: #0b141a;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+
+    /* Speech Bubble Tail for Incoming (Left / Bot) */
+    .bubble-in {
+      position: relative;
+      background-color: #202c33;
+      border-radius: 0 10px 10px 10px;
+    }
+    .bubble-in::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -8px;
+      width: 0;
+      height: 0;
+      border-top: 0 solid transparent;
+      border-right: 10px solid #202c33;
+      border-bottom: 10px solid transparent;
+    }
+
+    /* Speech Bubble Tail for Outgoing (Right / Customer) */
+    .bubble-out {
+      position: relative;
+      background-color: #005c4b;
+      border-radius: 10px 0 10px 10px;
+    }
+    .bubble-out::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: -8px;
+      width: 0;
+      height: 0;
+      border-top: 0 solid transparent;
+      border-left: 10px solid #005c4b;
+      border-bottom: 10px solid transparent;
+    }
+
+    /* Custom Slim Scrollbar */
+    .wa-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .wa-scroll::-webkit-scrollbar-track {
+      background: rgba(11, 20, 26, 0.8);
+    }
+    .wa-scroll::-webkit-scrollbar-thumb {
+      background: #374248;
+      border-radius: 4px;
+    }
+
+    /* iPhone Frame Styling */
+    .iphone-frame {
+      box-shadow: 0 0 0 12px #1e293b, 0 0 0 14px #0f172a, 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+  <!-- Control Bar for Portfolio Presenter -->
+  <div class="max-w-4xl w-full mb-4 flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3 rounded-2xl shadow-xl">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white">
+        <i class="fa-brands fa-whatsapp text-lg"></i>
+      </div>
+      <div>
+        <h2 class="text-xs font-bold text-white uppercase tracking-wider">WhatsApp Portfolio Showcase</h2>
+        <p class="text-[11px] text-slate-400">Pixel-Perfect Authentic Chat Interface</p>
+      </div>
+    </div>
+
+    <!-- Interactive Buttons -->
+    <div class="flex items-center gap-2">
+      <button id="btn-replay" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition">
+        <i class="fa-solid fa-play text-emerald-400"></i> Auto-Play Chat
+      </button>
+
+      <button id="btn-instant-all" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow">
+        <i class="fa-solid fa-expand"></i> Show Full Chat (for Screenshot)
+      </button>
+
+      <button id="btn-toggle-frame" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition">
+        <i class="fa-solid fa-mobile-screen"></i> Toggle Mobile / Desktop
+      </button>
+    </div>
+  </div>
+
+  <!-- WhatsApp Container (Wraps either iPhone or Desktop view) -->
+  <div id="device-wrapper" class="w-full max-w-[440px] transition-all duration-300">
+    <div id="phone-container" class="iphone-frame rounded-[46px] overflow-hidden bg-[#0b141a] border border-slate-800 flex flex-col h-[780px] relative">
+
+      <!-- iPhone Notch / Dynamic Island & Status Bar -->
+      <div id="status-bar" class="bg-[#202c33] px-6 pt-3 pb-1 flex justify-between items-center text-[12px] text-slate-300 font-semibold select-none z-20">
+        <span id="status-bar-clock">11:42</span>
+        <div class="w-24 h-4 bg-black rounded-full mx-auto shadow-inner flex items-center justify-end px-2">
+          <div class="w-2 h-2 rounded-full bg-[#111] border border-slate-800"></div>
+        </div>
+        <div class="flex items-center gap-1.5 text-[11px]">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full text-sm"></i>
+        </div>
+      </div>
+
+      <!-- WhatsApp App Header -->
+      <div class="bg-[#202c33] px-3.5 py-2.5 flex items-center justify-between border-b border-[#2a3942] z-10 shadow-md">
+        <div class="flex items-center gap-2.5">
+          <!-- Back arrow -->
+          <button class="text-[#aebac1] hover:text-white text-sm">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+
+          <!-- Business Profile Avatar -->
+          <div class="relative cursor-pointer">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white text-lg font-bold shadow">
+              <i class="fa-solid fa-burger"></i>
+            </div>
+            <!-- Online status green dot -->
+            <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#202c33]"></span>
+          </div>
+
+          <!-- Business Info -->
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-semibold text-sm text-[#e9edef] leading-tight tracking-wide">Bistro Gourmet</span>
+              <!-- Official WhatsApp Green Verified Badge -->
+              <span title="Official Business Account" class="text-emerald-400 text-xs inline-flex items-center">
+                <i class="fa-solid fa-circle-check"></i>
+              </span>
+            </div>
+            <div class="text-[11px] text-[#8696a0] leading-none mt-0.5 flex items-center gap-1">
+              <span id="bot-status-text">Official Business Account • online</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Header Action Icons -->
+        <div class="flex items-center gap-4 text-[#aebac1] text-sm pr-1">
+          <i class="fa-solid fa-video cursor-pointer hover:text-white transition"></i>
+          <i class="fa-solid fa-phone cursor-pointer hover:text-white transition"></i>
+          <i class="fa-solid fa-ellipsis-vertical cursor-pointer hover:text-white transition"></i>
+        </div>
+      </div>
+
+      <!-- Chat Scrollable Body -->
+      <div id="chat-stream" class="flex-1 overflow-y-auto wa-bg px-3.5 py-4 space-y-3.5 wa-scroll text-[13px] leading-relaxed">
+
+        <!-- Encryption Security Banner -->
+        <div class="flex justify-center my-1">
+          <div class="bg-[#182229] border border-[#222e35] text-[#ffd279] text-[11px] text-center px-4 py-2 rounded-lg max-w-[92%] shadow-sm flex items-center gap-2">
+            <i class="fa-solid fa-lock text-[#ffd279] text-xs"></i>
+            <span>Messages and calls are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them.</span>
+          </div>
+        </div>
+
+        <!-- Date Pill -->
+        <div class="flex justify-center my-2">
+          <span class="bg-[#182229] text-[#8696a0] text-[11px] font-semibold uppercase tracking-wider px-3 py-1 rounded-md shadow-sm border border-[#222e35]">
+            TODAY
+          </span>
+        </div>
+
+        <!-- Messages Container (Dynamically rendered) -->
+        <div id="messages-list" class="space-y-3"></div>
+
+        <!-- Typing Indicator Element -->
+        <div id="typing-indicator" class="hidden flex justify-start pl-2">
+          <div class="bubble-in text-[#8696a0] px-4 py-2.5 shadow-sm text-xs flex items-center gap-1.5">
+            <span class="italic text-[12px]">Bistro Gourmet is typing</span>
+            <span class="inline-flex gap-1 items-center">
+              <span class="w-1.5 h-1.5 bg-[#8696a0] rounded-full animate-bounce"></span>
+              <span class="w-1.5 h-1.5 bg-[#8696a0] rounded-full animate-bounce [animation-delay:0.2s]"></span>
+              <span class="w-1.5 h-1.5 bg-[#8696a0] rounded-full animate-bounce [animation-delay:0.4s]"></span>
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- WhatsApp Bottom Input Bar -->
+      <div class="bg-[#202c33] px-3 py-2 flex items-center gap-2 border-t border-[#222e35] z-10">
+        <!-- Emoji Button -->
+        <button class="text-[#8696a0] hover:text-[#e9edef] text-lg p-1 transition">
+          <i class="fa-regular fa-face-smile"></i>
+        </button>
+
+        <!-- Attachment Button -->
+        <button class="text-[#8696a0] hover:text-[#e9edef] text-lg p-1 transition">
+          <i class="fa-solid fa-paperclip"></i>
+        </button>
+
+        <!-- Input Box -->
+        <form id="chat-form" class="flex-1 flex items-center">
+          <input type="text" id="chat-input" placeholder="Type a message" class="w-full bg-[#2a3942] text-[#e9edef] text-[13px] px-3.5 py-2.5 rounded-lg focus:outline-none placeholder-[#8696a0]">
+        </form>
+
+        <!-- Mic / Send Button -->
+        <button id="btn-send-msg" class="w-9 h-9 rounded-full bg-[#00a884] hover:bg-[#029070] text-white flex items-center justify-center transition shadow">
+          <i id="send-icon" class="fa-solid fa-microphone text-sm"></i>
+        </button>
+      </div>
+
+      <!-- iPhone Home Bar -->
+      <div class="bg-[#202c33] pb-1.5 flex justify-center">
+        <div class="w-32 h-1 bg-slate-500/60 rounded-full"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Authentic WhatsApp Conversation Script (US Market, USD Pricing)
+    const CONVERSATION = [
+      {
+        sender: "customer",
+        time: "11:42 AM",
+        text: "Hi! Can I see your lunch menu please? Looking to order for delivery."
+      },
+      {
+        sender: "bot",
+        time: "11:42 AM",
+        text: "Hello! Welcome to *Bistro Gourmet - American Craft Kitchen* 🍔🍕\n\nHere is our fresh lunch menu:\n\n🍔 *Artisan Burgers*:\n• *The Classic Bacon Cheeseburger* - $13.99\n• *Smoky Texas BBQ Brisket Burger* - $16.50\n• *Crispy Nashville Hot Chicken* - $14.25\n• *Truffle Mushroom Swiss* - $15.75\n\n🍕 *Woodfired Pizzas (14\" Large)*:\n• *Brooklyn Pepperoni Feast* - $21.99\n• *Smoked BBQ Chicken Pizza* - $19.50\n\n🍟 *Sides & Appetizers*:\n• *Loaded Truffle Parmesan Fries* - $7.50\n• *Buffalo Wings (8 Pcs)* - $11.99\n\n🥤 *Beverages*:\n• *Hand-Spun Salted Caramel Shake* - $6.50\n• *Classic Coca-Cola Can* - $2.50\n\n🛵 *Flat Delivery Fee*: $3.99 across town\n\nWhat can I get prepared for you?"
+      },
+      {
+        sender: "customer",
+        time: "11:44 AM",
+        text: "Sounds great! I'll take 2 Classic Bacon Cheeseburgers and 1 Loaded Truffle Parmesan Fries please."
+      },
+      {
+        sender: "bot",
+        time: "11:44 AM",
+        text: "Fantastic choice! 🍔🍟\n\nCould you please provide your full *Delivery Address* (Street, Apt/Suite, City, State, ZIP code)?"
+      },
+      {
+        sender: "customer",
+        time: "11:45 AM",
+        text: "742 Evergreen Terrace, Springfield, OR 97477. Also please leave it on the porch table and ring the doorbell once."
+      },
+      {
+        sender: "bot",
+        time: "11:45 AM",
+        text: "Perfect! Here is your order breakdown:\n\n📋 *ORDER SUMMARY*\n• 2x The Classic Bacon Cheeseburger ($27.98)\n• 1x Loaded Truffle Parmesan Fries ($7.50)\n• Flat Delivery Fee: $3.99\n--------------------------------\n💵 *Total Bill*: *$39.47*\n📍 *Deliver To*: 742 Evergreen Terrace, Springfield, OR 97477\n📝 *Notes*: Leave on porch table, ring doorbell once.\n\nShall I confirm this order and dispatch it straight to our kitchen?"
+      },
+      {
+        sender: "customer",
+        time: "11:46 AM",
+        text: "Yes, please confirm the order!"
+      },
+      {
+        sender: "bot",
+        time: "11:46 AM",
+        text: "🎉 *Order Confirmed & Sent to Kitchen!*\n\n🆔 *Order ID*: *#ORD-8492*\n⏱️ *Estimated Delivery*: 30-35 mins\n💵 *Payment*: Pay Driver on Delivery ($39.47)\n\nOur kitchen team is firing up the grill right now! You can reply *\"Where is my order?\"* at any time for live status tracking. Enjoy!"
+      },
+      {
+        sender: "customer",
+        time: "12:02 PM",
+        text: "Hey, where is my order right now?"
+      },
+      {
+        sender: "bot",
+        time: "12:02 PM",
+        text: "👨‍🍳 *Live Kitchen Update*:\nYour order *#ORD-8492* has finished cooking on the grill and is currently being packed in insulated thermal bags! Dispatch driver assignment is in progress.\n\n⏱️ *Estimated arrival*: ~12 minutes!"
+      },
+      {
+        sender: "bot",
+        time: "12:10 PM",
+        text: "🛵 *Driver Out for Delivery*:\nDriver Mike has picked up your meal from the kitchen and is en route to 742 Evergreen Terrace in a silver Honda Civic. Please keep your phone handy!"
+      }
+    ];
+
+    const messagesList = document.getElementById('messages-list');
+    const chatStream = document.getElementById('chat-stream');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const btnReplay = document.getElementById('btn-replay');
+    const btnInstantAll = document.getElementById('btn-instant-all');
+    const btnToggleFrame = document.getElementById('btn-toggle-frame');
+    const deviceWrapper = document.getElementById('device-wrapper');
+    const chatInput = document.getElementById('chat-input');
+    const chatForm = document.getElementById('chat-form');
+    const sendIcon = document.getElementById('send-icon');
+    const botStatusText = document.getElementById('bot-status-text');
+
+    let isDesktop = false;
+    let autoPlayTimer = null;
+
+    // Helper: Format message text with WhatsApp bold (*text*), italic (_text_), and line breaks
+    function formatWhatsAppMarkup(text) {
+      let formatted = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      // *bold*
+      formatted = formatted.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+      // _italic_
+      formatted = formatted.replace(/_([^_]+)_/g, '<em>$1</em>');
+      // Linebreaks
+      formatted = formatted.replace(/\n/g, '<br>');
+      return formatted;
+    }
+
+    // Render a single authentic message bubble
+    function createMessageBubble(msg) {
+      const isCustomer = msg.sender === 'customer';
+      const container = document.createElement('div');
+      container.className = `flex ${isCustomer ? 'justify-end pl-10' : 'justify-start pr-10'} animate-fade-in`;
+
+      const bubbleClass = isCustomer ? 'bubble-out text-[#e9edef]' : 'bubble-in text-[#e9edef]';
+
+      // WhatsApp Double Blue Ticks SVG
+      const blueTicksSvg = `
+        <svg viewBox="0 0 16 15" width="16" height="15" class="inline-block text-[#53bdeb] ml-1 align-baseline fill-current">
+          <path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"/>
+        </svg>
+      `;
+
+      container.innerHTML = `
+        <div class="${bubbleClass} px-3 py-2 max-w-[94%] shadow-sm relative">
+          <div class="text-[13px] leading-relaxed break-words">${formatWhatsAppMarkup(msg.text)}</div>
+          <div class="flex items-center justify-end gap-1 mt-1 text-[11px] text-[#8696a0] select-none">
+            <span>${msg.time}</span>
+            ${isCustomer ? blueTicksSvg : ''}
+          </div>
+        </div>
+      `;
+
+      return container;
+    }
+
+    // Render Instant Full View (Ready for screenshot)
+    function renderFullConversation() {
+      clearTimeout(autoPlayTimer);
+      typingIndicator.classList.add('hidden');
+      botStatusText.textContent = "Official Business Account • online";
+      const clockElem = document.getElementById('status-bar-clock');
+      if (clockElem) clockElem.textContent = "12:10";
+      messagesList.innerHTML = '';
+      CONVERSATION.forEach(msg => {
+        messagesList.appendChild(createMessageBubble(msg));
+      });
+      chatStream.scrollTop = chatStream.scrollHeight;
+    }
+
+    // Auto-Play with realistic typing indicator
+    function playConversationStep(index = 0) {
+      if (index === 0) {
+        messagesList.innerHTML = '';
+        const clockElem = document.getElementById('status-bar-clock');
+        if (clockElem) clockElem.textContent = "11:42";
+      }
+
+      if (index >= CONVERSATION.length) {
+        typingIndicator.classList.add('hidden');
+        botStatusText.textContent = "Official Business Account • online";
+        return;
+      }
+
+      const msg = CONVERSATION[index];
+
+      // Sync iPhone status bar clock with the live message time
+      const clockElem = document.getElementById('status-bar-clock');
+      if (clockElem && msg && msg.time) {
+        clockElem.textContent = msg.time.replace(/ [AP]M/i, '').trim();
+      }
+
+      if (msg.sender === 'bot') {
+        // Show typing indicator
+        typingIndicator.classList.remove('hidden');
+        botStatusText.textContent = "typing...";
+        chatStream.scrollTop = chatStream.scrollHeight;
+
+        const typingDelay = Math.min(1800, Math.max(900, msg.text.length * 12));
+
+        autoPlayTimer = setTimeout(() => {
+          typingIndicator.classList.add('hidden');
+          botStatusText.textContent = "Official Business Account • online";
+          messagesList.appendChild(createMessageBubble(msg));
+          chatStream.scrollTop = chatStream.scrollHeight;
+
+          // Next step
+          autoPlayTimer = setTimeout(() => playConversationStep(index + 1), 1400);
+        }, typingDelay);
+      } else {
+        // Customer sends
+        typingIndicator.classList.add('hidden');
+        messagesList.appendChild(createMessageBubble(msg));
+        chatStream.scrollTop = chatStream.scrollHeight;
+
+        autoPlayTimer = setTimeout(() => playConversationStep(index + 1), 1200);
+      }
+    }
+
+    // Input Box Listeners
+    chatInput.addEventListener('input', () => {
+      if (chatInput.value.trim().length > 0) {
+        sendIcon.className = "fa-solid fa-paper-plane text-sm";
+      } else {
+        sendIcon.className = "fa-solid fa-microphone text-sm";
+      }
+    });
+
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text) return;
+      chatInput.value = '';
+      sendIcon.className = "fa-solid fa-microphone text-sm";
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // Add user message
+      messagesList.appendChild(createMessageBubble({
+        sender: 'customer',
+        time: timeStr,
+        text: text
+      }));
+      chatStream.scrollTop = chatStream.scrollHeight;
+
+      // Bot typing response
+      typingIndicator.classList.remove('hidden');
+      botStatusText.textContent = "typing...";
+
+      setTimeout(() => {
+        typingIndicator.classList.add('hidden');
+        botStatusText.textContent = "Official Business Account • online";
+
+        let reply = "Thank you for your message! Our AI Concierge is active. You can browse the menu or track existing orders anytime.";
+        const lower = text.toLowerCase();
+
+        if (lower.includes('menu') || lower.includes('food')) {
+          reply = "🍔 *Bistro Gourmet Menu*:\n• Classic Bacon Cheeseburger: $13.99\n• Smoky Texas BBQ Burger: $16.50\n• Brooklyn Pepperoni Pizza: $21.99\n• Loaded Truffle Fries: $7.50\n\nDelivery fee is $3.99 flat. What would you like?";
+        } else if (lower.includes('status') || lower.includes('where') || lower.includes('track')) {
+          reply = "👨‍🍳 *Order #ORD-8492 Live Status*: Freshly cooked in kitchen! Driver dispatched with thermal packaging. Arriving shortly!";
+        } else if (lower.includes('order') || lower.includes('burger')) {
+          reply = "Got it! Please confirm your items and delivery address (Street, City, ZIP) so I can place this with the kitchen.";
+        }
+
+        messagesList.appendChild(createMessageBubble({
+          sender: 'bot',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          text: reply
+        }));
+        chatStream.scrollTop = chatStream.scrollHeight;
+      }, 1000);
+    });
+
+    // Toggle Desktop / Mobile View
+    btnToggleFrame.addEventListener('click', () => {
+      isDesktop = !isDesktop;
+      if (isDesktop) {
+        deviceWrapper.className = "w-full max-w-[850px] transition-all duration-300";
+        document.getElementById('phone-container').className = "rounded-2xl overflow-hidden bg-[#0b141a] border border-slate-800 flex flex-col h-[750px] shadow-2xl relative";
+        document.getElementById('status-bar').classList.add('hidden');
+        btnToggleFrame.innerHTML = `<i class="fa-solid fa-mobile-screen"></i> Switch to iPhone View`;
+      } else {
+        deviceWrapper.className = "w-full max-w-[440px] transition-all duration-300";
+        document.getElementById('phone-container').className = "iphone-frame rounded-[46px] overflow-hidden bg-[#0b141a] border border-slate-800 flex flex-col h-[780px] relative";
+        document.getElementById('status-bar').classList.remove('hidden');
+        btnToggleFrame.innerHTML = `<i class="fa-solid fa-desktop"></i> Switch to Desktop View`;
+      }
+    });
+
+    btnReplay.addEventListener('click', () => playConversationStep(0));
+    btnInstantAll.addEventListener('click', renderFullConversation);
+
+    // Initial Load: Render full conversation for instant portfolio screenshots
+    window.addEventListener('DOMContentLoaded', () => {
+      renderFullConversation();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Temporary Frame Render Directories
+temp_frames/
+temp_4x3_frames/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+*.log
+
+# Vercel Deployment Directory
+.vercel
