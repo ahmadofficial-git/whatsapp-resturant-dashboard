@@ -2,16 +2,22 @@
   "name": "whatsapp-restaurant-agent",
   "version": "1.0.0",
   "description": "[![n8n](https://img.shields.io/badge/Workflow-n8n%20Automation-FF6D5A?style=for-the-badge&logo=n8n&logoColor=white)](https://n8n.io) [![Supabase](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com) [![WhatsApp Business API](https://img.shields.io/badge/WhatsApp-Cloud%20API%20%7C%20Evolution-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://developers.facebook.com/docs/whatsapp) [![Langflow](https://img.shields.io/badge/AI%20Orchestration-Langflow%20%2B%20LangChain-7C3AED?style=for-the-badge)](https://langflow.org) [![TailwindCSS](https://img.shields.io/badge/Frontend-TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)",
-  "main": "index.js",
+  "main": "index.html",
   "scripts": {
-    "build": "echo 'Static build ready'",
-    "start": "serve ."
+    "build": "echo 'Static build ready'"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "whatsapp",
+    "restaurant-kds",
+    "n8n",
+    "supabase",
+    "langflow",
+    "ai-agent"
+  ],
+  "author": "Muhammad Ahmad",
+  "license": "MIT",
   "type": "commonjs",
-  "dependencies": {
+  "devDependencies": {
     "ffmpeg-static": "^5.3.0",
     "puppeteer-core": "^25.17.0"
   }
